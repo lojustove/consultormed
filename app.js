@@ -108,7 +108,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': 'Bearer sk-09a182815c644a55a40a1a850cb31473'
+                    'Authorization': 'Bearer sk-a8f655a3b223489cb20403ec4b5559d6'
                 },
                 body: JSON.stringify({
                     model: "deepseek-chat",
