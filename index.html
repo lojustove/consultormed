@@ -1,18 +1,24 @@
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ConsultorMed AI</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body class="bg-gray-100">
-    <div class="loading-screen">
-        <img src="medical-ai-logo.png" alt="Logo" class="logo">
-        <div class="loading-text">Cargando...</div>
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="loading-content">
+            <img src="medical-ai-logo.png" alt="Logo ConsultorMed AI" class="loading-logo">
+            <div id="loadingText" class="loading-text">Cargando...</div>
+            <div class="loading-spinner"></div>
+        </div>
     </div>
-    
-    <div class="app-container">
+
+    <!-- Main App Content -->
+    <div id="mainApp" class="app-container hidden">
         <div class="header">
             <img src="medical-ai-logo.png" alt="Logo" class="logo">
             <h1>ConsultorMed AI</h1>
