@@ -1,43 +1,61 @@
 let conversationHistory = [];
-let lastScrollTop = 0;
+let loadingTextInterval;
 
 document.addEventListener('DOMContentLoaded', function() {
-    const loadingScreen = document.querySelector('.loading-screen');
-    const appContainer = document.querySelector('.app-container');
-    
-    // Show loading screen for 5 seconds
-    setTimeout(() => {
-        loadingScreen.classList.add('fade-out');
-        appContainer.classList.add('visible');
-        setTimeout(() => {
-            loadingScreen.style.display = 'none';
-        }, 500);
-    }, 5000);
-
     const chatContainer = document.getElementById('chatContainer');
     const userInput = document.getElementById('userInput');
     const sendButton = document.getElementById('sendButton');
-    const header = document.querySelector('.header');
+    const loadingScreen = document.getElementById('loadingScreen');
+    const mainApp = document.getElementById('mainApp');
+    const loadingTextElement = document.getElementById('loadingText');
 
-    // Simplificar el control de scroll para el header
-    let isScrollingTimeout;
-    chatContainer.addEventListener('scroll', function() {
-        const scrollTop = chatContainer.scrollTop;
-        const welcomeContainer = document.querySelector('.welcome-container');
-        
-        if (welcomeContainer) {
-            const welcomeRect = welcomeContainer.getBoundingClientRect();
-            const isNearWelcome = welcomeRect.top > -100 && welcomeRect.top < 200;
-            
-            if (isNearWelcome) {
-                header.classList.remove('hidden');
-                chatContainer.classList.remove('header-hidden');
-            } else {
-                header.classList.add('hidden');
-                chatContainer.classList.add('header-hidden');
-            }
-        }
-    });
+    // Loading texts sequence
+    const loadingTexts = [
+        "Cargando...",
+        "Preparando tu consulta...",
+        "Buscando información...",
+        "Pensando en soluciones..."
+    ];
+    let currentLoadingTextIndex = 0;
+
+    // Function to update loading text
+    function updateLoadingText() {
+        loadingTextElement.textContent = loadingTexts[currentLoadingTextIndex];
+        currentLoadingTextIndex = (currentLoadingTextIndex + 1) % loadingTexts.length;
+    }
+
+    // Start loading screen animation and text changes
+    updateLoadingText(); // Set initial text
+    loadingTextInterval = setInterval(updateLoadingText, 1500); // Change text every 1.5 seconds
+
+    // Simulate loading time (4 to 8 seconds)
+    const minLoadTime = 4000; // 4 seconds
+    const maxLoadTime = 8000; // 8 seconds
+    const loadTime = Math.random() * (maxLoadTime - minLoadTime) + minLoadTime;
+
+    setTimeout(() => {
+        // Stop changing text
+        clearInterval(loadingTextInterval);
+
+        // Hide loading screen with fade out
+        loadingScreen.classList.add('hidden');
+
+        // Show main app content after fade out
+        loadingScreen.addEventListener('transitionend', () => {
+             mainApp.classList.remove('hidden');
+             // Initialize chat content after the app is visible
+             initializeChatContent();
+        }, { once: true });
+
+    }, loadTime);
+
+    // Function to initialize the chat content after loading
+    function initializeChatContent() {
+        // Add suggestions for query
+        addSuggestions();
+        // Add initial welcome message
+        addMessage("¡Hola! Soy tu asistente médico virtual. Estoy aquí para brindarte información sobre temas de salud y sugerir remedios naturales que han funcionado para otras personas. ¿En qué puedo ayudarte hoy?", true);
+    }
 
     // Agregar sugerencias de consulta
     function addSuggestions() {
@@ -50,18 +68,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const welcomeContainer = document.createElement('div');
         welcomeContainer.className = 'welcome-container';
-        
+
         const welcomeTitle = document.createElement('div');
         welcomeTitle.className = 'welcome-title';
         welcomeTitle.textContent = '¡Bienvenido a ConsultorMed AI!';
-        
+
         const welcomeText = document.createElement('div');
         welcomeText.className = 'welcome-text';
         welcomeText.textContent = 'Estamos aquí para ayudarte con tus consultas de salud. Puedes preguntarme sobre:';
-        
+
         const suggestionsDiv = document.createElement('div');
         suggestionsDiv.className = 'suggestions';
-        
+
         suggestions.forEach(suggestion => {
             const chip = document.createElement('div');
             chip.className = 'suggestion-chip';
@@ -80,38 +98,24 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Función para añadir mensajes al chat
-    function addMessage(message, isAI = false, imageUrl = null) {
+    function addMessage(message, isAI = false) {
         const messageDiv = document.createElement('div');
         messageDiv.className = `message ${isAI ? 'ai-message' : 'user-message'}`;
-        
-        const textDiv = document.createElement('div');
-        textDiv.textContent = message;
-        messageDiv.appendChild(textDiv);
-        
-        if (isAI && imageUrl) {
-            const imageContainer = document.createElement('div');
-            imageContainer.className = 'message-image-container';
-            
-            const image = document.createElement('img');
-            image.src = imageUrl;
-            image.alt = 'Imagen médica relacionada';
-            image.className = 'message-image';
-            
-            imageContainer.appendChild(image);
-            messageDiv.appendChild(imageContainer);
-        }
-        
+        messageDiv.textContent = message;
+
+        // Añadir animación de entrada suave
         messageDiv.style.opacity = '0';
         messageDiv.style.transform = 'translateY(20px)';
-        
+
         chatContainer.appendChild(messageDiv);
-        
+
+        // Forzar el reflow
         messageDiv.offsetHeight;
-        
+
         messageDiv.style.transition = 'all 0.3s ease-out';
         messageDiv.style.opacity = '1';
         messageDiv.style.transform = 'translateY(0)';
-        
+
         chatContainer.scrollTop = chatContainer.scrollHeight;
     }
 
@@ -156,7 +160,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': 'Bearer sk-sk-318da35cb25647b995bdf7d9c9d79f09'
+                    'Authorization': 'Bearer sk-6a1dbca0ef8a4f7380810036fc621aa8'
                 },
                 body: JSON.stringify({
                     model: "deepseek-chat",
@@ -178,17 +182,9 @@ document.addEventListener('DOMContentLoaded', function() {
             hideTypingIndicator();
 
             if (data.choices && data.choices[0]) {
+                // Añadir respuesta de la IA
                 const aiResponse = data.choices[0].message.content;
-                
-                // Buscar una imagen relevante basada en palabras clave de la respuesta
-                try {
-                    const keywords = extractKeywords(aiResponse);
-                    const imageUrl = await getRelevantImage(keywords);
-                    addMessage(aiResponse, true, imageUrl);
-                } catch (error) {
-                    addMessage(aiResponse, true);
-                    console.error('Error getting image:', error);
-                }
+                addMessage(aiResponse, true);
 
                 // Añadir a la historia de la conversación
                 conversationHistory.push({
@@ -211,67 +207,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Función para extraer palabras clave del texto
-    function extractKeywords(text) {
-        // Lista de palabras médicas comunes en español para ignorar
-        const commonWords = ['dolor', 'síntomas', 'tratamiento', 'medicina', 'salud'];
-        
-        // Limpiar y dividir el texto
-        const words = text.toLowerCase()
-            .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, '')
-            .split(/\s+/);
-        
-        // Encontrar palabras relevantes
-        const relevantWords = words.filter(word => 
-            word.length > 3 && 
-            !commonWords.includes(word)
-        );
-        
-        // Identificar términos médicos específicos
-        const medicalTerms = words.filter(word => 
-            word.includes('itis') || 
-            word.includes('emia') || 
-            word.includes('algia')
-        );
-        
-        return [...new Set([...medicalTerms, ...relevantWords.slice(0, 2)])].join(' ') + ' medical';
-    }
-
-    // Función para obtener una imagen relevante
-    async function getRelevantImage(keywords) {
-        const response = await fetch(`https://api.unsplash.com/photos/random?query=${encodeURIComponent(keywords)}&client_id=MhowRKJfrYdtFrjtcwYapJ7Arg_gxGW76MfcVq2KYNQ`);
-        const data = await response.json();
-        return data.urls.small;
-    }
-
-    userInput.addEventListener('focus', function() {
-        // Small delay to ensure the keyboard is fully shown
-        setTimeout(() => {
-            userInput.scrollIntoView({ behavior: 'smooth' });
-        }, 300);
-    });
-
-    // Prevent elastic scrolling on iOS
-    document.body.addEventListener('touchmove', function(e) {
-        if (e.target === document.body) {
-            e.preventDefault();
-        }
-    }, { passive: false });
-
-    // Improve touch response
-    if ('ontouchstart' in window) {
-        const touchElements = document.querySelectorAll('.suggestion-chip, #sendButton');
-        touchElements.forEach(elem => {
-            elem.addEventListener('touchstart', function() {
-                this.style.opacity = '0.7';
-            });
-            elem.addEventListener('touchend', function() {
-                this.style.opacity = '1';
-            });
-        });
-    }
-
-    // Event listeners
+    // Event listeners for send button and input field
     sendButton.addEventListener('click', sendMessage);
     userInput.addEventListener('keypress', function(e) {
         if (e.key === 'Enter' && !e.shiftKey) {
@@ -279,10 +215,4 @@ document.addEventListener('DOMContentLoaded', function() {
             sendMessage();
         }
     });
-
-    // Mensaje inicial más amigable
-    setTimeout(() => {
-        addSuggestions();
-        addMessage("¡Hola! Soy tu asistente médico virtual. Estoy aquí para brindarte información sobre temas de salud y sugerir remedios naturales que han funcionado para otras personas. ¿En qué puedo ayudarte hoy?", true);
-    }, 1000);
 });
