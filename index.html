@@ -1,19 +1,17 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ConsultorMed AI</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link rel="manifest" href="/manifest.json">
     <link rel="stylesheet" href="styles.css">
-    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="shortcut icon" href="/favicon.ico" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-    <meta name="apple-mobile-web-app-title" content="MyWebSite" />
-    <link rel="manifest" href="/site.webmanifest" />
 </head>
 <body class="bg-gray-100">
+    <div class="loading-screen">
+        <img src="medical-ai-logo.png" alt="Logo" class="logo">
+        <div class="loading-text">Cargando...</div>
+    </div>
+    
     <div class="app-container">
         <div class="header">
             <img src="medical-ai-logo.png" alt="Logo" class="logo">
@@ -36,10 +34,6 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
                 </svg>
             </button>
-        </div>
-        <!-- Contenedor para anuncios -->
-        <div class="ad-container" id="ad-container">
-            <!-- Google AdSense se insertará aquí -->
         </div>
     </div>
     <script src="app.js"></script>
