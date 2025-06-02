@@ -1,9 +1,43 @@
 let conversationHistory = [];
+let lastScrollTop = 0;
 
 document.addEventListener('DOMContentLoaded', function() {
+    const loadingScreen = document.querySelector('.loading-screen');
+    const appContainer = document.querySelector('.app-container');
+    
+    // Show loading screen for 5 seconds
+    setTimeout(() => {
+        loadingScreen.classList.add('fade-out');
+        appContainer.classList.add('visible');
+        setTimeout(() => {
+            loadingScreen.style.display = 'none';
+        }, 500);
+    }, 5000);
+
     const chatContainer = document.getElementById('chatContainer');
     const userInput = document.getElementById('userInput');
     const sendButton = document.getElementById('sendButton');
+    const header = document.querySelector('.header');
+
+    // Simplificar el control de scroll para el header
+    let isScrollingTimeout;
+    chatContainer.addEventListener('scroll', function() {
+        const scrollTop = chatContainer.scrollTop;
+        const welcomeContainer = document.querySelector('.welcome-container');
+        
+        if (welcomeContainer) {
+            const welcomeRect = welcomeContainer.getBoundingClientRect();
+            const isNearWelcome = welcomeRect.top > -100 && welcomeRect.top < 200;
+            
+            if (isNearWelcome) {
+                header.classList.remove('hidden');
+                chatContainer.classList.remove('header-hidden');
+            } else {
+                header.classList.add('hidden');
+                chatContainer.classList.add('header-hidden');
+            }
+        }
+    });
 
     // Agregar sugerencias de consulta
     function addSuggestions() {
@@ -46,18 +80,32 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Función para añadir mensajes al chat
-    function addMessage(message, isAI = false) {
+    function addMessage(message, isAI = false, imageUrl = null) {
         const messageDiv = document.createElement('div');
         messageDiv.className = `message ${isAI ? 'ai-message' : 'user-message'}`;
-        messageDiv.textContent = message;
         
-        // Añadir animación de entrada suave
+        const textDiv = document.createElement('div');
+        textDiv.textContent = message;
+        messageDiv.appendChild(textDiv);
+        
+        if (isAI && imageUrl) {
+            const imageContainer = document.createElement('div');
+            imageContainer.className = 'message-image-container';
+            
+            const image = document.createElement('img');
+            image.src = imageUrl;
+            image.alt = 'Imagen médica relacionada';
+            image.className = 'message-image';
+            
+            imageContainer.appendChild(image);
+            messageDiv.appendChild(imageContainer);
+        }
+        
         messageDiv.style.opacity = '0';
         messageDiv.style.transform = 'translateY(20px)';
         
         chatContainer.appendChild(messageDiv);
         
-        // Forzar el reflow
         messageDiv.offsetHeight;
         
         messageDiv.style.transition = 'all 0.3s ease-out';
@@ -108,7 +156,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': 'Bearer sk-a8f655a3b223489cb20403ec4b5559d6'
+                    'Authorization': 'Bearer sk-sk-318da35cb25647b995bdf7d9c9d79f09'
                 },
                 body: JSON.stringify({
                     model: "deepseek-chat",
@@ -130,9 +178,17 @@ document.addEventListener('DOMContentLoaded', function() {
             hideTypingIndicator();
 
             if (data.choices && data.choices[0]) {
-                // Añadir respuesta de la IA
                 const aiResponse = data.choices[0].message.content;
-                addMessage(aiResponse, true);
+                
+                // Buscar una imagen relevante basada en palabras clave de la respuesta
+                try {
+                    const keywords = extractKeywords(aiResponse);
+                    const imageUrl = await getRelevantImage(keywords);
+                    addMessage(aiResponse, true, imageUrl);
+                } catch (error) {
+                    addMessage(aiResponse, true);
+                    console.error('Error getting image:', error);
+                }
 
                 // Añadir a la historia de la conversación
                 conversationHistory.push({
@@ -153,6 +209,66 @@ document.addEventListener('DOMContentLoaded', function() {
             addMessage("Lo siento, ha ocurrido un error. Por favor, intenta de nuevo.", true);
             console.error('Error:', error);
         }
+    }
+
+    // Función para extraer palabras clave del texto
+    function extractKeywords(text) {
+        // Lista de palabras médicas comunes en español para ignorar
+        const commonWords = ['dolor', 'síntomas', 'tratamiento', 'medicina', 'salud'];
+        
+        // Limpiar y dividir el texto
+        const words = text.toLowerCase()
+            .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, '')
+            .split(/\s+/);
+        
+        // Encontrar palabras relevantes
+        const relevantWords = words.filter(word => 
+            word.length > 3 && 
+            !commonWords.includes(word)
+        );
+        
+        // Identificar términos médicos específicos
+        const medicalTerms = words.filter(word => 
+            word.includes('itis') || 
+            word.includes('emia') || 
+            word.includes('algia')
+        );
+        
+        return [...new Set([...medicalTerms, ...relevantWords.slice(0, 2)])].join(' ') + ' medical';
+    }
+
+    // Función para obtener una imagen relevante
+    async function getRelevantImage(keywords) {
+        const response = await fetch(`https://api.unsplash.com/photos/random?query=${encodeURIComponent(keywords)}&client_id=MhowRKJfrYdtFrjtcwYapJ7Arg_gxGW76MfcVq2KYNQ`);
+        const data = await response.json();
+        return data.urls.small;
+    }
+
+    userInput.addEventListener('focus', function() {
+        // Small delay to ensure the keyboard is fully shown
+        setTimeout(() => {
+            userInput.scrollIntoView({ behavior: 'smooth' });
+        }, 300);
+    });
+
+    // Prevent elastic scrolling on iOS
+    document.body.addEventListener('touchmove', function(e) {
+        if (e.target === document.body) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+
+    // Improve touch response
+    if ('ontouchstart' in window) {
+        const touchElements = document.querySelectorAll('.suggestion-chip, #sendButton');
+        touchElements.forEach(elem => {
+            elem.addEventListener('touchstart', function() {
+                this.style.opacity = '0.7';
+            });
+            elem.addEventListener('touchend', function() {
+                this.style.opacity = '1';
+            });
+        });
     }
 
     // Event listeners
