@@ -2,6 +2,8 @@ let conversationHistory = [];
 let loadingTextInterval;
 let currentTheme = 'light';
 let currentTextSize = 'medium';
+let isApplyingSettings = false; // Flag to track settings application
+let settingsNotificationTimeout; // Timeout reference for notification
 
 document.addEventListener('DOMContentLoaded', function() {
     const chatContainer = document.getElementById('chatContainer');
@@ -251,39 +253,68 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Theme toggle functionality
         themeToggle.addEventListener('change', function() {
-            if (this.checked) {
-                document.body.classList.add('dark-theme');
-                currentTheme = 'dark';
-            } else {
-                document.body.classList.remove('dark-theme');
-                currentTheme = 'light';
-            }
+            if (isApplyingSettings) return; // Prevent multiple rapid changes
+            isApplyingSettings = true;
             
-            // Save preference to localStorage
-            localStorage.setItem('theme', currentTheme);
+            // Show notification first
+            showSettingsNotification("Aplicando tema...");
+            
+            // Delay actual theme change for better performance
+            setTimeout(() => {
+                if (this.checked) {
+                    document.body.classList.add('dark-theme');
+                    currentTheme = 'dark';
+                } else {
+                    document.body.classList.remove('dark-theme');
+                    currentTheme = 'light';
+                }
+                
+                // Save preference to localStorage
+                localStorage.setItem('theme', currentTheme);
+                
+                // Complete notification
+                setTimeout(() => {
+                    showSettingsNotification("Tema aplicado", true);
+                    isApplyingSettings = false;
+                }, 200);
+            }, 50);
         });
         
         // Text size functionality
         textSizeBtns.forEach(btn => {
             btn.addEventListener('click', function() {
-                // Remove active class from all buttons
-                textSizeBtns.forEach(b => b.classList.remove('active'));
-                
-                // Add active class to clicked button
-                this.classList.add('active');
+                if (isApplyingSettings) return; // Prevent multiple rapid changes
+                isApplyingSettings = true;
                 
                 // Get the selected size
                 const size = this.getAttribute('data-size');
-                currentTextSize = size;
                 
-                // Remove all text size classes from body
-                document.body.classList.remove('text-small', 'text-medium', 'text-large');
+                // Show notification first
+                showSettingsNotification("Aplicando tamaño de texto...");
                 
-                // Add the selected text size class
-                document.body.classList.add('text-' + size);
+                // Remove active class from all buttons immediately for visual feedback
+                textSizeBtns.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
                 
-                // Save preference to localStorage
-                localStorage.setItem('textSize', size);
+                // Delay actual text size change
+                setTimeout(() => {
+                    currentTextSize = size;
+                    
+                    // Remove all text size classes from body
+                    document.body.classList.remove('text-small', 'text-medium', 'text-large');
+                    
+                    // Add the selected text size class
+                    document.body.classList.add('text-' + size);
+                    
+                    // Save preference to localStorage
+                    localStorage.setItem('textSize', size);
+                    
+                    // Complete notification
+                    setTimeout(() => {
+                        showSettingsNotification("Tamaño de texto aplicado", true);
+                        isApplyingSettings = false;
+                    }, 200);
+                }, 50);
             });
         });
         
@@ -291,35 +322,75 @@ document.addEventListener('DOMContentLoaded', function() {
         loadSavedPreferences();
     }
     
-    // Load saved user preferences
-    function loadSavedPreferences() {
-        // Load theme preference
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme) {
-            currentTheme = savedTheme;
-            if (savedTheme === 'dark') {
-                document.body.classList.add('dark-theme');
-                themeToggle.checked = true;
-            }
+    // Function to show settings change notification
+    function showSettingsNotification(message, isComplete = false) {
+        // Clear existing notification timeout
+        if (settingsNotificationTimeout) {
+            clearTimeout(settingsNotificationTimeout);
         }
         
-        // Load text size preference
-        const savedTextSize = localStorage.getItem('textSize');
-        if (savedTextSize) {
-            currentTextSize = savedTextSize;
-            document.body.classList.add('text-' + savedTextSize);
-            
-            // Update active button
-            textSizeBtns.forEach(btn => {
-                if (btn.getAttribute('data-size') === savedTextSize) {
-                    btn.classList.add('active');
-                } else {
-                    btn.classList.remove('active');
-                }
-            });
-        } else {
-            // Default to medium if not set
-            document.body.classList.add('text-medium');
+        // Get or create notification element
+        let notification = document.getElementById('settingsNotification');
+        if (!notification) {
+            notification = document.createElement('div');
+            notification.id = 'settingsNotification';
+            notification.className = 'settings-notification';
+            document.body.appendChild(notification);
         }
+        
+        // Update notification content
+        notification.textContent = message;
+        
+        // Apply success class if complete
+        if (isComplete) {
+            notification.classList.add('success');
+        } else {
+            notification.classList.remove('success');
+        }
+        
+        // Show notification
+        notification.classList.add('visible');
+        
+        // Auto-hide after a delay
+        settingsNotificationTimeout = setTimeout(() => {
+            notification.classList.remove('visible');
+        }, isComplete ? 2000 : 5000);
+    }
+    
+    // Load saved user preferences with progressive loading
+    function loadSavedPreferences() {
+        // Load basic UI first
+        setTimeout(() => {
+            // Load theme preference
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) {
+                currentTheme = savedTheme;
+                if (savedTheme === 'dark') {
+                    document.body.classList.add('dark-theme');
+                    themeToggle.checked = true;
+                }
+            }
+            
+            // Load text size preference after a small delay
+            setTimeout(() => {
+                const savedTextSize = localStorage.getItem('textSize');
+                if (savedTextSize) {
+                    currentTextSize = savedTextSize;
+                    document.body.classList.add('text-' + savedTextSize);
+                    
+                    // Update active button
+                    textSizeBtns.forEach(btn => {
+                        if (btn.getAttribute('data-size') === savedTextSize) {
+                            btn.classList.add('active');
+                        } else {
+                            btn.classList.remove('active');
+                        }
+                    });
+                } else {
+                    // Default to medium if not set
+                    document.body.classList.add('text-medium');
+                }
+            }, 100);
+        }, 50);
     }
 });
