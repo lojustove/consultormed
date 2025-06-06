@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ConsultorMed AI</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body class="bg-gray-100">
@@ -20,6 +21,9 @@
     <!-- Main App Content -->
     <div id="mainApp" class="app-container hidden">
         <div class="header">
+            <button id="settingsButton" class="settings-button" aria-label="Ajustes">
+                <i class="fas fa-cog"></i>
+            </button>
             <img src="medical-ai-logo.png" alt="Logo" class="logo">
             <h1>ConsultorMed AI</h1>
         </div>
@@ -42,6 +46,39 @@
             </button>
         </div>
     </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="settings-modal hidden">
+        <div class="settings-content">
+            <div class="settings-header">
+                <h2>Ajustes</h2>
+                <button id="closeSettings" class="close-button">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="settings-body">
+                <div class="setting-item">
+                    <span class="setting-label">Tema</span>
+                    <div class="theme-toggle">
+                        <input type="checkbox" id="themeToggle" class="theme-checkbox">
+                        <label for="themeToggle" class="theme-label">
+                            <span class="theme-light">Claro</span>
+                            <span class="theme-dark">Oscuro</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="setting-item">
+                    <span class="setting-label">Tamaño de texto</span>
+                    <div class="text-size-options">
+                        <button class="text-size-btn" data-size="small">Pequeño</button>
+                        <button class="text-size-btn active" data-size="medium">Mediano</button>
+                        <button class="text-size-btn" data-size="large">Grande</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="app.js"></script>
 </body>
 </html>
