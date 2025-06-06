@@ -26,6 +26,7 @@ body.dark-theme {
     --card-bg-color: #1E1E1E;
     --modal-bg-color: #2D2D2D;
     --border-color: #444;
+    transition: color 0.1s, background-color 0.1s;
 }
 
 /* Text size classes */
@@ -500,6 +501,14 @@ body.text-large {
         padding: 0.5rem 0.2rem;
         font-size: 0.85rem;
     }
+
+    .settings-notification {
+        bottom: 15px;
+        right: 15px;
+        padding: 8px 12px;
+        font-size: calc(var(--font-size-base) - 1px);
+        max-width: 250px;
+    }
 }
 
 /* Settings Modal Styles */
@@ -515,7 +524,8 @@ body.text-large {
     align-items: center;
     z-index: 2000;
     opacity: 1;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.2s ease; /* Faster transition */
+    will-change: opacity; /* Performance hint */
 }
 
 .settings-modal.hidden {
@@ -531,7 +541,8 @@ body.text-large {
     max-height: 80vh;
     overflow-y: auto;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-    animation: modalSlideIn 0.3s ease;
+    animation: modalSlideIn 0.2s ease; /* Faster animation */
+    will-change: transform; /* Performance hint */
 }
 
 .settings-header {
@@ -681,4 +692,33 @@ body.text-large {
         transform: translateY(0);
         opacity: 1;
     }
+}
+
+/* Settings notification */
+.settings-notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: var(--primary-color);
+    color: white;
+    padding: 10px 15px;
+    border-radius: 8px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+    z-index: 3000;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    font-size: calc(var(--font-size-base));
+    max-width: 300px;
+    text-align: center;
+    pointer-events: none;
+}
+
+.settings-notification.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.settings-notification.success {
+    background-color: #4CAF50;
 }
