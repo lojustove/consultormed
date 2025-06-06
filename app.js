@@ -1,5 +1,7 @@
 let conversationHistory = [];
 let loadingTextInterval;
+let currentTheme = 'light';
+let currentTextSize = 'medium';
 
 document.addEventListener('DOMContentLoaded', function() {
     const chatContainer = document.getElementById('chatContainer');
@@ -8,6 +10,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const loadingScreen = document.getElementById('loadingScreen');
     const mainApp = document.getElementById('mainApp');
     const loadingTextElement = document.getElementById('loadingText');
+    
+    // Settings related elements
+    const settingsButton = document.getElementById('settingsButton');
+    const settingsModal = document.getElementById('settingsModal');
+    const closeSettings = document.getElementById('closeSettings');
+    const themeToggle = document.getElementById('themeToggle');
+    const textSizeBtns = document.querySelectorAll('.text-size-btn');
 
     // Loading texts sequence
     const loadingTexts = [
@@ -45,6 +54,8 @@ document.addEventListener('DOMContentLoaded', function() {
              mainApp.classList.remove('hidden');
              // Initialize chat content after the app is visible
              initializeChatContent();
+             // Initialize settings
+             setupSettings();
         }, { once: true });
 
     }, loadTime);
@@ -167,11 +178,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     messages: [
                         {
                             role: "system",
-                            content: "Eres un consultor médico experto. Da respuestas breves y precauciones. Nunca uses asteriscos. Usa viñetas o números para listas. Nunca des instrucciones directas - en su lugar, menciona lo que la gente suele hacer o lo que ha funcionado para otros ('Algunas personas suelen...', 'Tradicionalmente se ha usado...'). Si detectas algo grave, sugiere consultar a un médico inmediatamente. Máximo 2-3 oraciones por respuesta. Siempre termina con 'Consulte a un profesional de salud para un diagnóstico preciso', asegurate que la respuesta este resumida en 100 palabras, ademas de que puedes utilizar emojis moderadamente para darle vida al texto"
+                            content: "Eres un consultor médico experto. Da respuestas breves y precauciones. Nunca uses asteriscos. Usa viñetas o números para listas. Nunca des instrucciones directas - en su lugar, menciona lo que la gente suele hacer o lo que ha funcionado para otros ('Algunas personas suelen...', 'Tradicionalmente se ha usado...'). Si detectas algo grave, sugiere consultar a un médico inmediatamente. Máximo 2-3 oraciones por respuesta. Siempre termina con 'Consulte a un profesional de salud para un diagnóstico preciso'."
                         },
                         ...conversationHistory
                     ],
-                    max_tokens: 300,
+                    max_tokens: 100,
                     temperature: 0.7
                 })
             });
@@ -215,4 +226,100 @@ document.addEventListener('DOMContentLoaded', function() {
             sendMessage();
         }
     });
+
+    // Settings functionality
+    function setupSettings() {
+        // Open settings modal
+        settingsButton.addEventListener('click', function() {
+            settingsModal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden'; // Prevent scrolling behind modal
+        });
+        
+        // Close settings with X button
+        closeSettings.addEventListener('click', function() {
+            settingsModal.classList.add('hidden');
+            document.body.style.overflow = '';
+        });
+        
+        // Close settings when clicking outside the modal
+        settingsModal.addEventListener('click', function(e) {
+            if (e.target === settingsModal) {
+                settingsModal.classList.add('hidden');
+                document.body.style.overflow = '';
+            }
+        });
+        
+        // Theme toggle functionality
+        themeToggle.addEventListener('change', function() {
+            if (this.checked) {
+                document.body.classList.add('dark-theme');
+                currentTheme = 'dark';
+            } else {
+                document.body.classList.remove('dark-theme');
+                currentTheme = 'light';
+            }
+            
+            // Save preference to localStorage
+            localStorage.setItem('theme', currentTheme);
+        });
+        
+        // Text size functionality
+        textSizeBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Remove active class from all buttons
+                textSizeBtns.forEach(b => b.classList.remove('active'));
+                
+                // Add active class to clicked button
+                this.classList.add('active');
+                
+                // Get the selected size
+                const size = this.getAttribute('data-size');
+                currentTextSize = size;
+                
+                // Remove all text size classes from body
+                document.body.classList.remove('text-small', 'text-medium', 'text-large');
+                
+                // Add the selected text size class
+                document.body.classList.add('text-' + size);
+                
+                // Save preference to localStorage
+                localStorage.setItem('textSize', size);
+            });
+        });
+        
+        // Load saved preferences
+        loadSavedPreferences();
+    }
+    
+    // Load saved user preferences
+    function loadSavedPreferences() {
+        // Load theme preference
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme) {
+            currentTheme = savedTheme;
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-theme');
+                themeToggle.checked = true;
+            }
+        }
+        
+        // Load text size preference
+        const savedTextSize = localStorage.getItem('textSize');
+        if (savedTextSize) {
+            currentTextSize = savedTextSize;
+            document.body.classList.add('text-' + savedTextSize);
+            
+            // Update active button
+            textSizeBtns.forEach(btn => {
+                if (btn.getAttribute('data-size') === savedTextSize) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        } else {
+            // Default to medium if not set
+            document.body.classList.add('text-medium');
+        }
+    }
 });
